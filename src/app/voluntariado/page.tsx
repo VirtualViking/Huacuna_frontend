@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/src/components/ui/Navbar";
-import Breadcrumb from "@/src/components/ui/Breadcrumb";
+import Navbar from "@/components/ui/Navbar";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 
 export default function VoluntariadoPage() {
   const opportunities = [
