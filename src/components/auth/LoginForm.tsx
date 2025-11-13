@@ -6,21 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Mail, Lock, AlertCircle, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
-/**
- * LoginForm
- *
- * Componente responsable de presentar el formulario de inicio de sesión,
- * validar campos básicos en el cliente y delegar la acción de autenticación
- * al hook `useAuth`.
- *
- * Responsabilidades:
- * - Mostrar inputs y validaciones rápidas (email regex, campos obligatorios)
- * - Mostrar estado de carga, errores y mensajes de éxito
- * - Redirigir al dashboard después de un inicio de sesión exitoso
- *
- * No debe:
- * - Contener lógica de negocio del backend (eso lo maneja `useAuth`)
- */
 export function LoginForm() {
   const router = useRouter();
   const { login, isLoading, error, clearError } = useAuth();

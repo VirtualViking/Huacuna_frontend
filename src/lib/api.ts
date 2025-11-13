@@ -1,21 +1,5 @@
 // src/lib/api.ts
 
-/*
-  src/lib/api.ts
-
-  Propósito:
-  - Centralizar la configuración de la comunicación con el backend (URL base y endpoints)
-  - Proveer una utilidad `fetchWithTimeout` para llamadas HTTP con timeout y headers por defecto.
-
-  Uso:
-  - Importar `API_ENDPOINTS` para obtener las rutas del backend.
-  - Usar `fetchWithTimeout` para realizar llamadas que necesiten un timeout y manejo de errores por tiempo.
-
-  Notas:
-  - La variable `NEXT_PUBLIC_API_URL` permite apuntar a diferentes servidores sin tocar el código.
-  - `fetchWithTimeout` usa AbortController; lanza un error claro cuando la petición se agota.
-*/
-
 export const API_BASE_URL = 
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -23,11 +7,37 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/auth/login`,
     REGISTER: `${API_BASE_URL}/api/auth/register`,
-    // ⬇️ AGREGAR ESTAS 3 LÍNEAS ⬇️
     FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
     VERIFY_TOKEN: (token: string) => `${API_BASE_URL}/api/auth/verify-token/${token}`,
   },
+  CMS: {
+    // EVENTOS
+    EVENTS: `${API_BASE_URL}/api/cms/events`,
+    EVENT_BY_ID: (id: number) => `${API_BASE_URL}/api/cms/events/${id}`,
+    EVENT_ACTIVATE: (id: number) => `${API_BASE_URL}/api/cms/events/${id}/activate`,
+    EVENT_DEACTIVATE: (id: number) => `${API_BASE_URL}/api/cms/events/${id}/deactivate`,
+    EVENT_SEARCH: `${API_BASE_URL}/api/cms/events/search`,
+    
+    // PROYECTOS
+    PROJECTS: `${API_BASE_URL}/api/cms/projects`,
+    PROJECT_BY_ID: (id: number) => `${API_BASE_URL}/api/cms/projects/${id}`,
+    PROJECT_ACTIVATE: (id: number) => `${API_BASE_URL}/api/cms/projects/${id}/activate`,
+    PROJECT_DEACTIVATE: (id: number) => `${API_BASE_URL}/api/cms/projects/${id}/deactivate`,
+    PROJECT_UPDATE_FUNDS: (id: number) => `${API_BASE_URL}/api/cms/projects/${id}/funds`,
+    PROJECT_UPDATE_STATUS: (id: number) => `${API_BASE_URL}/api/cms/projects/${id}/status`,
+    PROJECT_SEARCH: `${API_BASE_URL}/api/cms/projects/search`,
+    
+    // NIÑOS EN ADOPCIÓN
+    CHILDREN: `${API_BASE_URL}/api/cms/children`,
+    CHILD_BY_ID: (id: number) => `${API_BASE_URL}/api/cms/children/${id}`,
+    CHILD_ACTIVATE: (id: number) => `${API_BASE_URL}/api/cms/children/${id}/activate`,
+    CHILD_DEACTIVATE: (id: number) => `${API_BASE_URL}/api/cms/children/${id}/deactivate`,
+    CHILD_ASSIGN_SPONSOR: (id: number) => `${API_BASE_URL}/api/cms/children/${id}/sponsor`,
+    CHILD_REMOVE_SPONSOR: (id: number) => `${API_BASE_URL}/api/cms/children/${id}/sponsor`,
+    CHILD_UPDATE_STATUS: (id: number) => `${API_BASE_URL}/api/cms/children/${id}/status`,
+    CHILD_SEARCH: `${API_BASE_URL}/api/cms/children/search`,
+  }
 };
 
 export const DEFAULT_HEADERS = {
@@ -37,14 +47,6 @@ export const DEFAULT_HEADERS = {
 
 export const REQUEST_TIMEOUT = 10000;
 
-/**
- * fetchWithTimeout
- * - url: ruta a llamar
- * - options: init de fetch (method, body, headers...)
- * - timeout: tiempo máximo en ms antes de abortar la petición
- *
- * Lanza: Error('La solicitud tardó demasiado tiempo') si AbortController cancela la petición.
- */
 export async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
@@ -73,33 +75,25 @@ export async function fetchWithTimeout(
   }
 }
 
-/**
- * Utilidad para obtener el token del localStorage
- */
+// ✅ CAMBIO 1: Usar sessionStorage en lugar de localStorage
+// ✅ CAMBIO 2: Usar 'auth_token' en lugar de 'authToken'
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('authToken');
+  return sessionStorage.getItem('auth_token');
 }
 
-/**
- * Utilidad para guardar el token en localStorage
- */
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('authToken', token);
+  sessionStorage.setItem('auth_token', token);
 }
 
-/**
- * Utilidad para eliminar el token del localStorage
- */
 export function removeAuthToken(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('authToken');
+  sessionStorage.removeItem('auth_token');
 }
 
-/**
- * Utilidad para hacer fetch con autenticación
- */
+// ✅ CAMBIO 3: Mantener Authorization sin "Bearer " 
+// (tu backend no lo necesita según el SecurityConfig)
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {},

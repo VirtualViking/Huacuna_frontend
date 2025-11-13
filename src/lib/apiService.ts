@@ -24,13 +24,16 @@ const apiService = axios.create({
 // Su trabajo es tomar el token del localStorage y añadirlo al header.
 apiService.interceptors.request.use(
   (config) => {
-    // Obtenemos el token guardado (lo guardaremos en el Paso 3)
-    const token = localStorage.getItem("authToken");
-    
-    if (token) {
-      // Si el token existe, lo añadimos al header 'Authorization'
-      config.headers["Authorization"] = `Bearer ${token}`;
+    // Verificar que estamos en el navegador
+    if (typeof window !== 'undefined') {
+      const token = sessionStorage.getItem("auth_token");
+      
+      if (token) {
+        // Si el token existe, lo añadimos al header 'Authorization'
+        config.headers["Authorization"] = token;
+      }
     }
+    
     return config;
   },
   (error) => {

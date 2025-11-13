@@ -14,29 +14,6 @@ import type {
   IVerifyTokenResponse,
 } from "../types/auth";
 
-/*
-  useAuth - Hook de autenticación
-
-  Propósito:
-  - Centraliza la lógica de autenticación del frontend: login, register, logout,
-    gestión de estado (user, token) y persistencia en sessionStorage.
-  - NUEVO: Recuperación de contraseña (forgotPassword, resetPassword, verifyResetToken)
-
-  Responsabilidad:
-  - Exponer una API simple: { user, token, isLoading, error, login, logout, 
-    forgotPassword, resetPassword, verifyResetToken, clearError }
-  - Manejar side-effects mínimos (guardar/leer de sessionStorage)
-
-  Interacciones:
-  - Usa `fetchWithTimeout` y `API_ENDPOINTS` desde `src/lib/api.ts` para comunicarse con el backend.
-  - Consumido por `LoginForm`, `RegisterForm`, `ForgotPasswordForm`, `ResetPasswordForm` y `Navbar`.
-
-  Notas y buenas prácticas:
-  - Mantener este hook ligero: ninguna lógica de UI aquí.
-  - En producción considerar tokens en cookies httpOnly y refresh tokens en lugar de sessionStorage.
-  - Es una buena candidata a pruebas unitarias (mockear la capa fetch).
-*/
-
 export function useAuth() {
   const [user, setUser] = useState<IUserInfo | null>(() => {
     if (typeof window !== "undefined") {
