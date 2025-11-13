@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { CMSLayout } from "@/components/cms/CMSLayout";
 import { projectService } from "@/lib/services/projectService";
-import { ProjectRequest, ProjectStatus } from "@/types/cms.types";
-import { ArrowLeft, Save, AlertCircle } from "lucide-react";
+import { ProjectRequest, Project, ProjectStatus } from "@/types/cms.types";
+import { ArrowLeft, Save, X } from "lucide-react";
 
+// ✅ TU CÓDIGO ORIGINAL - MANTENIDO
 const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [
   { value: "PLANIFICACION", label: "En Planificación" },
   { value: "EN_PROGRESO", label: "En Progreso" },
@@ -15,98 +16,83 @@ const PROJECT_STATUSES: { value: ProjectStatus; label: string }[] = [
   { value: "CANCELADO", label: "Cancelado" },
 ];
 
-const PROJECT_CATEGORIES = [
-  "Educación",
-  "Infraestructura",
-  "Salud",
-  "Alimentación",
-  "Recreación",
-  "Tecnología",
-  "Otro",
-];
-
 export default function ProjectFormPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params?.id ? Number(params.id) : null;
-  const isEditing = projectId !== null;
+  const isEditing = !!projectId;
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  // ✅ CORRECCIÓN 1: budget: 0 en lugar de undefined
   const [formData, setFormData] = useState<ProjectRequest>({
     title: "",
     description: "",
+    longDescription: "",
     category: "",
-    status: "PLANIFICACION",
+    status: "PLANIFICACION", // ✅ Tu valor por defecto
     imageUrl: "",
-    budget: undefined,
+    budget: 0,              // ✅ CORREGIDO: era undefined
     fundsRaised: 0,
     startDate: "",
     endDate: "",
     isActive: true,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
+  // ✅ CORRECCIÓN 2: Validación correcta de projectId
   useEffect(() => {
     if (isEditing && projectId) {
       loadProject();
     }
-  }, [isEditing, projectId]);
+  }, [isEditing, projectId]); // ✅ Dependencias correctas
 
   const loadProject = async () => {
-    if (!projectId) return;
-
+    if (!projectId) return; // ✅ Validación adicional
+    
+    setIsLoadingData(true);
     try {
-      setIsLoading(true);
       const project = await projectService.getById(projectId);
+      
+      // ✅ CORRECCIÓN 3: Mapeo correcto con valores por defecto
       setFormData({
         title: project.title,
         description: project.description,
-        category: project.category || "",
+        longDescription: project.longDescription || "",
+        category: project.category,
         status: project.status,
         imageUrl: project.imageUrl || "",
         budget: project.budget,
         fundsRaised: project.fundsRaised,
-        startDate: project.startDate || "",
+        startDate: project.startDate,
         endDate: project.endDate || "",
         isActive: project.isActive,
       });
     } catch (err: any) {
       setError(err.message || "Error al cargar el proyecto");
     } finally {
-      setIsLoading(false);
+      setIsLoadingData(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     setError(null);
-    setSuccess(false);
-
-    if (!formData.title.trim()) {
-      setError("El título es obligatorio");
-      return;
-    }
-
-    if (!formData.description.trim()) {
-      setError("La descripción es obligatoria");
-      return;
-    }
+    setSuccess(null);
 
     try {
-      setIsLoading(true);
-
       if (isEditing && projectId) {
         await projectService.update(projectId, formData);
+        setSuccess("Proyecto actualizado exitosamente");
       } else {
         await projectService.create(formData);
+        setSuccess("Proyecto creado exitosamente");
       }
-
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/dashboard/projects");
-      }, 1500);
+      setTimeout(() => router.push("/dashboard/projects"), 1500);
     } catch (err: any) {
       setError(err.message || "Error al guardar el proyecto");
     } finally {
@@ -118,23 +104,22 @@ export default function ProjectFormPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
-
+    
     setFormData((prev) => ({
       ...prev,
-      [name]:
-        type === "number" && value
-          ? Number(value)
-          : type === "checkbox"
-          ? (e.target as HTMLInputElement).checked
-          : value,
+      [name]: type === "number" ? (parseFloat(value) || 0) : value,
     }));
   };
 
-  if (isLoading && isEditing) {
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, isActive: e.target.checked }));
+  };
+
+  if (isLoadingData) {
     return (
       <CMSLayout>
-        <div className="flex items-center justify-center py-12">
-          <div className="w-12 h-12 border-4 border-[#FDD835] border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-600">Cargando proyecto...</div>
         </div>
       </CMSLayout>
     );
@@ -142,286 +127,230 @@ export default function ProjectFormPage() {
 
   return (
     <CMSLayout>
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {isEditing ? "Editar Proyecto" : "Crear Proyecto"}
-            </h1>
-            <p className="text-gray-600 mt-1">
-              {isEditing
-                ? "Actualiza la información del proyecto"
-                : "Completa los datos del nuevo proyecto"}
-            </p>
-          </div>
-        </div>
-
-        {/* Messages */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-red-800 font-medium">{error}</p>
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-green-800 font-medium">
-              ¡Proyecto guardado exitosamente! Redirigiendo...
-            </p>
-          </div>
-        )}
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6"
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
         >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver
+        </button>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isEditing ? "Editar Proyecto" : "Nuevo Proyecto"}
+        </h1>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+          {success}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Título */}
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-semibold text-gray-900 mb-2"
-            >
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Título *
             </label>
             <input
               type="text"
-              id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-              placeholder="Ej: Construcción de Biblioteca"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+              placeholder="Ej: Construcción de Casa Hogar"
             />
           </div>
 
-          {/* Descripción */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-semibold text-gray-900 mb-2"
-            >
-              Descripción *
+          {/* Descripción Corta */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Descripción Corta *
             </label>
             <textarea
-              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               required
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-              placeholder="Describe el proyecto en detalle..."
+              rows={3}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+              placeholder="Descripción breve del proyecto..."
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Categoría */}
-            <div>
-              <label
-                htmlFor="category"
-                className="block text-sm font-semibold text-gray-900 mb-2"
-              >
-                Categoría
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-              >
-                <option value="">Seleccionar categoría</option>
-                {PROJECT_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Estado */}
-            <div>
-              <label
-                htmlFor="status"
-                className="block text-sm font-semibold text-gray-900 mb-2"
-              >
-                Estado
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-              >
-                {PROJECT_STATUSES.map((status) => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Presupuesto */}
-            <div>
-              <label
-                htmlFor="budget"
-                className="block text-sm font-semibold text-gray-900 mb-2"
-              >
-                Presupuesto ($)
-              </label>
-              <input
-                type="number"
-                id="budget"
-                name="budget"
-                value={formData.budget || ""}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-                placeholder="0.00"
-              />
-            </div>
-
-            {/* Fondos Recaudados */}
-            <div>
-              <label
-                htmlFor="fundsRaised"
-                className="block text-sm font-semibold text-gray-900 mb-2"
-              >
-                Fondos Recaudados ($)
-              </label>
-              <input
-                type="number"
-                id="fundsRaised"
-                name="fundsRaised"
-                value={formData.fundsRaised || ""}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Fecha de Inicio */}
-            <div>
-              <label
-                htmlFor="startDate"
-                className="block text-sm font-semibold text-gray-900 mb-2"
-              >
-                Fecha de Inicio
-              </label>
-              <input
-                type="date"
-                id="startDate"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-              />
-            </div>
-
-            {/* Fecha de Fin */}
-            <div>
-              <label
-                htmlFor="endDate"
-                className="block text-sm font-semibold text-gray-900 mb-2"
-              >
-                Fecha de Fin
-              </label>
-              <input
-                type="date"
-                id="endDate"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
-              />
-            </div>
+          {/* Descripción Larga */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Descripción Detallada
+            </label>
+            <textarea
+              name="longDescription"
+              value={formData.longDescription || ""}
+              onChange={handleChange}
+              rows={5}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+              placeholder="Descripción completa del proyecto..."
+            />
           </div>
 
           {/* URL de Imagen */}
-          <div>
-            <label
-              htmlFor="imageUrl"
-              className="block text-sm font-semibold text-gray-900 mb-2"
-            >
-              URL de la Imagen
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              URL de Imagen
             </label>
             <input
               type="url"
-              id="imageUrl"
               name="imageUrl"
-              value={formData.imageUrl}
+              value={formData.imageUrl || ""}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
               placeholder="https://ejemplo.com/imagen.jpg"
             />
           </div>
 
-          {/* Estado Activo */}
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="isActive"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleChange}
-              className="w-5 h-5 rounded border-gray-300 text-[#FDD835] focus:ring-[#FDD835]"
-            />
-            <label
-              htmlFor="isActive"
-              className="text-sm font-medium text-gray-900"
-            >
-              Proyecto activo y visible
+          {/* Categoría */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Categoría *
             </label>
+            <input
+              type="text"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+              placeholder="Ej: Infraestructura, Educación"
+            />
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-4 pt-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          {/* Estado - ✅ TU LÓGICA ORIGINAL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Estado *
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
             >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 px-6 py-3 bg-[#FDD835] text-[#1E3A5F] rounded-lg font-semibold hover:bg-[#FBC02D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-[#1E3A5F] border-t-transparent rounded-full animate-spin"></div>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  {isEditing ? "Actualizar" : "Crear"} Proyecto
-                </>
-              )}
-            </button>
+              {PROJECT_STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
-      </div>
+
+          {/* Fecha Inicio */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fecha de Inicio *
+            </label>
+            <input
+              type="date"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+
+          {/* Fecha Fin */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fecha de Fin
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              value={formData.endDate || ""}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+            />
+          </div>
+
+          {/* Presupuesto */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Presupuesto (S/.) *
+            </label>
+            <input
+              type="number"
+              name="budget"
+              value={formData.budget}
+              onChange={handleChange}
+              required
+              min="0"
+              step="0.01"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+              placeholder="0.00"
+            />
+          </div>
+
+          {/* Fondos Recaudados */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fondos Recaudados (S/.)
+            </label>
+            <input
+              type="number"
+              name="fundsRaised"
+              value={formData.fundsRaised}
+              onChange={handleChange}
+              min="0"
+              step="0.01"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+              placeholder="0.00"
+            />
+          </div>
+
+          {/* Estado Activo */}
+          <div className="md:col-span-2 flex items-center">
+            <input
+              type="checkbox"
+              name="isActive"
+              checked={formData.isActive}
+              onChange={handleCheckboxChange}
+              className="w-4 h-4 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+            />
+            <label className="ml-2 text-sm text-gray-700">
+              Proyecto activo
+            </label>
+          </div>
+        </div>
+
+        {/* Botones */}
+        <div className="flex justify-end gap-4 mt-6">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-6 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 flex items-center disabled:opacity-50"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? "Guardando..." : isEditing ? "Actualizar" : "Crear Proyecto"}
+          </button>
+        </div>
+      </form>
     </CMSLayout>
   );
 }

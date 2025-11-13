@@ -43,6 +43,7 @@ export interface Project {
   id: number;
   title: string;
   description: string;
+   longDescription?: string;
   category?: string;
   status: ProjectStatus;
   statusDisplayName: string;
@@ -61,15 +62,15 @@ export interface Project {
 export interface ProjectRequest {
   title: string;
   description: string;
-  longDescription: string;
-  category?: string;
-  status?: string;
+  longDescription?: string;
+  category: string;
+  status: ProjectStatus;
   imageUrl?: string;
-  budget?: number;
+  budget: number;
   fundsRaised?: number;
-  startDate?: string;
+  startDate: string;
   endDate?: string;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 // ============================================

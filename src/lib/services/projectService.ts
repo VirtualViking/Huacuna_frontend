@@ -5,7 +5,7 @@ import { Project, ProjectRequest, ProjectFilters, ApiResponse, ProjectStatus } f
 
 export const projectService = {
   /**
-   * Obtiene todos los proyectos con filtros opcionales
+   * Obtiene los proyectos con filtros opcionales
    */
   async getAll(filters?: ProjectFilters): Promise<Project[]> {
     let url = API_ENDPOINTS.CMS.PROJECTS;

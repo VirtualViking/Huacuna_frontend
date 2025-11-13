@@ -8,8 +8,6 @@ import type {
   IErrorResponse,
 } from "../types/auth";
 
-// Este hook ya no es necesario ya que la funcionalidad de registro está en useAuth
-// Mantenido por compatibilidad temporal
 export function useRegister() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
