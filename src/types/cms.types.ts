@@ -61,6 +61,7 @@ export interface Project {
 export interface ProjectRequest {
   title: string;
   description: string;
+  longDescription: string;
   category?: string;
   status?: string;
   imageUrl?: string;

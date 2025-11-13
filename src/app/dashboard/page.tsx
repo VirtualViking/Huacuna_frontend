@@ -65,7 +65,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-xl p-6 shadow-sm text-center">
             <h3 className="font-semibold text-[#1E3A5F] mb-2">Apadrinamiento</h3>
             <p className="text-sm text-gray-500">Conoce cómo apadrinar y transformar una vida.</p>
-            <Link href="/apadrinar" className="mt-4 inline-block text-sm text-[#FDD835] font-semibold">Apadrinar ahora</Link>
+            <Link href="/apadrinarr" className="mt-4 inline-block text-sm text-[#FDD835] font-semibold">Apadrinar ahora</Link>
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow-sm text-center">
