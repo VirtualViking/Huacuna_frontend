@@ -23,7 +23,7 @@ export default function NewProjectPage() {
     endDate: "",
     budget: 0,
     fundsRaised: 0,
-    status: "PLANNED",
+    status: "PLANIFICACION",
     category: "",
     isActive: true,
   });
