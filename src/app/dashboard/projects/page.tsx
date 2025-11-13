@@ -171,7 +171,7 @@ export default function ProjectsPage() {
               placeholder="Buscar proyectos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835]"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FDD835] focus:border-[#FDD835] text-gray-900 placeholder:text-gray-500"
             />
           </div>
           <div className="flex gap-2">
