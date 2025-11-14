@@ -32,9 +32,9 @@ export default function ProjectFormPage() {
     description: "",
     longDescription: "",
     category: "",
-    status: "PLANIFICACION", // ✅ Tu valor por defecto
+    status: "PLANIFICACION", 
     imageUrl: "",
-    budget: 0,              // ✅ CORREGIDO: era undefined
+    budget: 0,        
     fundsRaised: 0,
     startDate: "",
     endDate: "",
@@ -43,7 +43,7 @@ export default function ProjectFormPage() {
 
   const [isLoadingData, setIsLoadingData] = useState(false);
 
-  // ✅ CORRECCIÓN 2: Validación correcta de projectId
+
   useEffect(() => {
     if (isEditing && projectId) {
       loadProject();
@@ -57,7 +57,7 @@ export default function ProjectFormPage() {
     try {
       const project = await projectService.getById(projectId);
       
-      // ✅ CORRECCIÓN 3: Mapeo correcto con valores por defecto
+      
       setFormData({
         title: project.title,
         description: project.description,
