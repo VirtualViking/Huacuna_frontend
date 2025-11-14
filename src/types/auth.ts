@@ -1,12 +1,10 @@
 // src/types/auth.ts
 
 /*
-  src/types/auth.ts
 
   Contiene las interfaces TypeScript usadas para describir los datos
   que intercambia el frontend con el backend en los flujos de autenticación.
 
-  Por qué es útil:
   - Sirve como documentación dentro del código sobre la forma de los objetos.
   - Ayuda al compilador a detectar errores tempranos cuando los campos cambian.
 
@@ -55,9 +53,7 @@ export interface IErrorResponse {
   path: string;
 }
 
-// ========================================
-// Interfaces para recuperación de contraseña
-// ========================================
+
 
 export interface IForgotPasswordRequest {
   email: string;
@@ -66,7 +62,7 @@ export interface IForgotPasswordRequest {
 export interface IForgotPasswordResponse {
   success: boolean;
   message: string;
-  token?: string; // Token temporal (solo en desarrollo)
+  token?: string; 
   note?: string;
 }
 

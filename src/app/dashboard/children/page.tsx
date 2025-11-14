@@ -175,7 +175,7 @@ export default function ChildrenPage() {
               Niños en Apadrinamiento
             </h1>
             <p className="text-gray-600 mt-1">
-              Gestiona los registros de niños disponibles para apadrinamiento
+              Modulo para el registro de niños 
             </p>
           </div>
           <button
